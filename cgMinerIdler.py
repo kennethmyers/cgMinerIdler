@@ -1,16 +1,19 @@
 import time
-
-import pexpect
+import subprocess
+import os
 
 from IdleTools import getTimeIdleInMilliseconds
 
 IDLE_TIME_THRESHOLD = 10000
 
-lowIntensityMiningCommand = 'mate-terminal -e "/home/kenneth/Desktop/cgminer-3.7.0-x86_64-built/cgminer -o stratum+tcp://stratum2.wemineltc.com:3335 -u kennyguy.cool -p beans -o stratum+tcp://stratum.hashfaster.com:3333 -u kennyguy.cool -p beans --scrypt -I 13 --auto-fan --temp-target 78 --temp-overheat 85 --temp-cutoff 90"'
-highIntensityMiningCommand = 'mate-terminal -e "/home/kenneth/Desktop/cgminer-3.7.0-x86_64-built/cgminer -o stratum+tcp://stratum2.wemineltc.com:3335 -u kennyguy.cool -p beans -o stratum+tcp://stratum.hashfaster.com:3333 -u kennyguy.cool -p beans --scrypt -I 20 --auto-fan --temp-target 78 --temp-overheat 85 --temp-cutoff 90"'
+d = dict(os.environ)   # Make a copy of the current environment
+d['GPU_MAX_ALLOC_PERCENT'] = '100'
 
-child = pexpect.spawn(lowIntensityMiningCommand)
+lowIntensityMiningCommand = './miner_command_low.sh'
+highIntensityMiningCommand = './miner_command_high.sh'
 time.sleep(10)
+miningProcess = subprocess.Popen("./miner_command_high.sh", shell=True, env=d)
+
 
 
 high_power = False
@@ -21,11 +24,11 @@ while True:
 
     if idleTime > IDLE_TIME_THRESHOLD:
         if not high_power:
-            child.terminate(force=True)
-            child = pexpect.spawn(highIntensityMiningCommand)
+            miningProcess.kill()
+            miningProcess = subprocess.Popen(highIntensityMiningCommand, shell=True, env=d)
             high_power = True
     else:
         if high_power:
-            child.terminate(force=True)
-            child = pexpect.spawn(lowIntensityMiningCommand)
+            miningProcess.kill()
+            miningProcess = subprocess.Popen(lowIntensityMiningCommand, shell=True, env=d)
             high_power = False
