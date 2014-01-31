@@ -30,7 +30,6 @@ while True:
             high_power = True
     else:
         if high_power:
-            print "kill"
             os.killpg(miningProcess.pid, signal.SIGTERM)
             miningProcess = subprocess.Popen(lowIntensityMiningCommand, shell=True, env=environmentVariables, preexec_fn=os.setsid)
             high_power = False
