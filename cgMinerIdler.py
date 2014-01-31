@@ -1,20 +1,21 @@
 import time
 import subprocess
 import os
+import signal
 
 from IdleTools import getTimeIdleInMilliseconds
 
 IDLE_TIME_THRESHOLD = 10000
 
-d = dict(os.environ)   # Make a copy of the current environment
-d['GPU_MAX_ALLOC_PERCENT'] = '100'
-
 lowIntensityMiningCommand = './miner_command_low.sh'
 highIntensityMiningCommand = './miner_command_high.sh'
+
+# Set environment variables.
+environmentVariables = dict(os.environ)
+environmentVariables['GPU_MAX_ALLOC_PERCENT'] = '100'
+
 time.sleep(10)
-miningProcess = subprocess.Popen("./miner_command_high.sh", shell=True, env=d)
-
-
+miningProcess = subprocess.Popen(lowIntensityMiningCommand, shell=True, env=environmentVariables, preexec_fn=os.setsid)
 
 high_power = False
 while True:
@@ -24,11 +25,11 @@ while True:
 
     if idleTime > IDLE_TIME_THRESHOLD:
         if not high_power:
-            miningProcess.kill()
-            miningProcess = subprocess.Popen(highIntensityMiningCommand, shell=True, env=d)
+            os.killpg(miningProcess.pid, signal.SIGTERM)
+            miningProcess = subprocess.Popen(highIntensityMiningCommand, shell=True, env=environmentVariables)
             high_power = True
     else:
         if high_power:
-            miningProcess.kill()
-            miningProcess = subprocess.Popen(lowIntensityMiningCommand, shell=True, env=d)
+            os.killpg(miningProcess.pid, signal.SIGTERM)
+            miningProcess = subprocess.Popen(lowIntensityMiningCommand, shell=True, env=environmentVariables)
             high_power = False
