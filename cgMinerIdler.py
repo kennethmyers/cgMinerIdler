@@ -5,7 +5,7 @@ import signal
 
 from IdleTools import getTimeIdleInMilliseconds
 
-IDLE_TIME_THRESHOLD = 10000
+IDLE_TIME_THRESHOLD = 60000 * 5 # 3 minutes
 
 lowIntensityMiningCommand = './miner_command_low.sh'
 highIntensityMiningCommand = './miner_command_high.sh'
@@ -26,10 +26,11 @@ while True:
     if idleTime > IDLE_TIME_THRESHOLD:
         if not high_power:
             os.killpg(miningProcess.pid, signal.SIGTERM)
-            miningProcess = subprocess.Popen(highIntensityMiningCommand, shell=True, env=environmentVariables)
+            miningProcess = subprocess.Popen(highIntensityMiningCommand, shell=True, env=environmentVariables, preexec_fn=os.setsid)
             high_power = True
     else:
         if high_power:
+            print "kill"
             os.killpg(miningProcess.pid, signal.SIGTERM)
-            miningProcess = subprocess.Popen(lowIntensityMiningCommand, shell=True, env=environmentVariables)
+            miningProcess = subprocess.Popen(lowIntensityMiningCommand, shell=True, env=environmentVariables, preexec_fn=os.setsid)
             high_power = False
